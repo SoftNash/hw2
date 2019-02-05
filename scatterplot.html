@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
+<style>
+
+</style>
+<body>
+<script>
+//width and height
+var w = 600;
+var h = 400;
+var padding = 40;
+
+//get svg
+var svg = d3.select("body").append("svg")
+    .attr("width", w)
+    .attr("height", h);
+
+
+// get the data
+d3.csv("movies.csv", function(d){
+  return{
+	Rating:+d.Rating,
+	WinsNoms:+d.WinsNoms,
+	IsGoodRating:+d.IsGoodRating
+	};
+}).then(function(data) {
+  console.log(data[0]);
+
+
+//set scale
+var xScale = d3.scaleLinear()
+.domain([0, d3.max(data, function(d){return d.Rating})])
+.range([padding, w-padding*2]);
+
+var yScale = d3.scaleLinear()
+.domain([0, d3.max(data, function(d){return d.WinsNoms})])
+.range([h-padding, padding]);
+
+//get axis
+var xAxis = d3.axisBottom().scale(xScale).ticks(5);
+var yAxis = d3.axisLeft().scale(yScale).ticks(5);
+
+//x axis
+svg.append("g")
+.attr("class", "x axis")	
+.attr("transform", "translate(0," + (h - padding) + ")")
+.call(xAxis);
+		
+//y axis
+svg.append("g")
+.attr("class", "y axis")	
+.attr("transform", "translate(" + padding + ", 0)")
+.call(yAxis);
+
+//get circles
+svg.selectAll("circle").data(data).enter().append("circle")
+.attr("cx",function(d){return xScale(d.Rating)})
+.attr("cy", function(d){return yScale(d.WinsNoms)})
+.attr("r",3).attr("fill", "white")
+.style("stroke", function(d){
+	if (d.IsGoodRating==1){return 'blue';}
+	else {return 'red';}
+        });
+
+//get legend
+svg.append("g")
+.attr("class", "legend")
+
+svg.selectAll("legend").data(data).enter().append("rect").each(function(d){return d.IsGoodRating})
+.attr("x", 450)             
+.attr("y", 20)
+.attr("width", 20).attr("height",20).attr("fill","white").style("stroke","black")
+
+});
+
+//set text
+
+svg.append("text")
+.attr("y",350)
+.attr("x",550)
+.style("text-anchor","middle")
+.text("Ratings");
+
+svg.append("text")
+.attr("transform","rotate(-90)")
+.attr("y",70)
+.attr("x",-80)
+.style("text-anchor","middle")
+.text("Wins+Noms");
+
+svg.append("text")
+.attr("x", 250)             
+.attr("y", 20)
+.attr("text-anchor", "middle")  
+.style("font-size", "16px") 
+.text("Wins+Nominations vs. Rating");
+
+
+
+</script>
+</body>
+</html>
