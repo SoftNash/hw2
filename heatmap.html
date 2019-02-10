@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
+<style>
+
+</style>
+<body>
+<script>
+
+//width and height
+var margin = {top: 30, right: 30, bottom: 30, left: 30},
+  width = 450 - margin.left - margin.right,
+  height = 400 - margin.top - margin.bottom;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + 2.5*margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+.append("g")
+  .attr("transform",
+        "translate(" + 2.5*margin.left + "," + margin.top + ")");
+
+var Borough = ["Staten Island", "Queens","Manhattan","Brooklyn","Bronx"]
+var Type = ["Shooting","Robbery","Murder","Housing","Burglary", "Assault" ]
+
+var x = d3.scaleBand()
+  .range([ 0, width-margin.left ])
+  .domain(Type.sort(function(a,b){ return d3.ascending(a.name, b.name); }))
+  .padding(0.01);
+svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+  .call(d3.axisBottom(x))
+
+var y = d3.scaleBand()
+  .range([ height, 0 ])
+  .domain(Borough)
+  .padding(0.01);
+svg.append("g")
+  .call(d3.axisLeft(y));
+
+// Build color scale
+var myColor = d3.scaleLinear()
+  .range(["white", "#69b3a2"])
+  .domain([1,100])
+
+
+
+
+//Read the data
+var long_data = [];
+d3.csv("heatmap.csv").then(function(data) {
+  
+
+  data.forEach(function(d) {
+      //if (d["Year"]=="2011"){
+        data.forEach(function(row){
+	Object.keys(row).forEach(function(colname){
+		if(colname == "Year" || colname == "Crime Type") {
+        		return
+      		}
+		long_data.push({ "CrimeType":row["Crime Type"], "Value":+row[colname], "Year":+row["Year"], "Borough":colname});
+	})
+      
+    })
+   
+  });
+
+
+g = svg.selectAll(".cell").data(long_data).enter().append("g").attr("class", "cell").append("rect").filter(function(d) { return d.Year==2011 })
+      .attr("x", function(d) { return x(d.CrimeType)})
+      .attr("y", function(d) { return y(d.Borough) })
+      .attr("width", x.bandwidth() )
+      .attr("height", y.bandwidth() )
+      .style("fill", function(d) { return myColor(d.Value)} )
+});
+
+
+svg.append("text")
+.attr("y",height+margin.top-2.5)
+.attr("x",width-margin.right)
+.style("text-anchor","middle")
+.text("Crime Type");
+
+svg.append("text")
+.attr("y",-5)
+.attr("x",margin.top)
+.style("text-anchor","middle")
+.text("Borough");
+
+
+var op = [2011, 2012, 2013, 2014, 2015];
+
+var select = d3.select('body')
+  .append('select')
+  	.attr('class','select')
+    .on('change',onchange)
+
+var options = select
+  .selectAll('option')
+	.data(op).enter()
+	.append('option')
+		.text(function (d) { return d; });
+
+function onchange() {
+	//g.exit().remove();
+	selectValue = d3.select('select').property('value')
+	d3.select('body')
+		.append('p')
+		.text(selectValue + ' is the last selected option.')
+	
+	
+	var rects = svg.selectAll("rect").data(long_data);
+	rects.enter().append("rect").merge(rects)
+        .filter(function(d) { return d.Year== selectValue })
+      .attr("x", function(d) { return x(d.CrimeType)})
+      .attr("y", function(d) { return y(d.Borough) })
+      .attr("width", x.bandwidth() )
+      .attr("height", y.bandwidth() )
+      .style("fill", function(d) { return myColor(d.Value)} )
+
+       
+	
+};
+
+
+
+
+
+</script>
+</body>
+</html>
